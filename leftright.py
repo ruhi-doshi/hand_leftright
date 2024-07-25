@@ -15,6 +15,10 @@ mp_drawing = mp.solutions.drawing_utils
 
 cap = cv2.VideoCapture(0) 
 
+# Initialize variables for tracking movement
+previous_y = None
+movement_threshold = 5  # Adjust as necessary
+
 while True: 
     success, img = cap.read()
     if not success:
@@ -35,8 +39,18 @@ while True:
             h, w, c = img.shape
             wrist_x, wrist_y = int(wrist.x * w), int(wrist.y * h)
             
+            # Movement detection
+            if previous_y is not None:
+                if wrist_y < previous_y - movement_threshold:
+                    cv2.putText(img, 'Up', (wrist_x, wrist_y - 20), 
+                                cv2.FONT_HERSHEY_COMPLEX, 
+                                0.9, (0, 255, 0), 2)
+                elif wrist_y > previous_y + movement_threshold:
+                    cv2.putText(img, 'Down', (wrist_x, wrist_y - 20), 
+                                cv2.FONT_HERSHEY_COMPLEX, 
+                                0.9, (0, 0, 255), 2)
             if len(results.multi_handedness) == 2:
-                cv2.putText(img, 'Both Hands', (wrist_x, wrist_y),
+                cv2.putText(img, 'Both', (20, 20),
                             cv2.FONT_HERSHEY_COMPLEX,
                             0.9, (0, 255, 0), 2)
             else:
@@ -44,13 +58,14 @@ while True:
                     label = MessageToDict(i)['classification'][0]['label']
   
                     if label == 'Left':
-                        cv2.putText(img, label + ' Hand', (wrist_x, wrist_y),
+                        cv2.putText(img, label, (20, 20),
                                     cv2.FONT_HERSHEY_COMPLEX, 
                                     0.9, (0, 255, 0), 2)
                     if label == 'Right':
-                        cv2.putText(img, label + ' Hand', (wrist_x, wrist_y),
+                        cv2.putText(img, label, (20, 20),
                                     cv2.FONT_HERSHEY_COMPLEX, 
-                                    0.9, (0, 255, 0), 2)
+                                    0.9, (0, 255, 0), 2)  
+            previous_y = wrist_y
   
     cv2.imshow('Image', img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
